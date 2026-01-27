@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 
-const ALCHEMY_KEY = "PzVM39rbazQkvROnR6Atj"; // replace with your Sepolia key
+// Load Alchemy key from Vite env (set VITE_ALCHEMY_KEY in .env)
+const ALCHEMY_KEY = import.meta.env.VITE_ALCHEMY_KEY as string | undefined;
 
 // Add proper window.ethereum type declaration
 declare global {
@@ -56,6 +57,11 @@ export type SimpleTx = {
 
 /** Fetch last 10 transactions from Alchemy Sepolia */
 export async function getTransactions(address: string): Promise<SimpleTx[]> {
+  if (!ALCHEMY_KEY) {
+    console.error('VITE_ALCHEMY_KEY is not set. Skipping transaction fetch.');
+    return [];
+  }
+
   const url = `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_KEY}`;
   const data = {
     id: 1,
