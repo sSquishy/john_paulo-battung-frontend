@@ -10,8 +10,7 @@ function App() {
   const [balance, setBalance] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<SimpleTx[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
-  const [gasPrice, setGasPrice] = useState<string | null>(null);
-  const [blockNumber, setBlockNumber] = useState<string | null>(null);
+  
 
   const connectWallet = async () => {
     setIsConnecting(true);
@@ -23,13 +22,6 @@ function App() {
 
       const userBalance = await getBalance(address);
       setBalance(userBalance);
-
-      const gas = await window.ethereum?.request({ method: "eth_gasPrice" });
-      if (gas) setGasPrice((parseInt(gas as string, 16) / 1e9).toFixed(7));
-
-      const block = await window.ethereum?.request({ method: "eth_blockNumber" });
-      if (block) setBlockNumber(parseInt(block as string, 16).toString());
-
       await refreshTransactions(address);
     } catch (error: unknown) {
       if (error instanceof Error) setError(error.message);
@@ -124,16 +116,7 @@ function App() {
             </div>
 
             <div className="dashboard-content">
-              <div className="info-section">
-                <div className="info-card">
-                  <p className="info-label">Current Gas Price</p>
-                  <p className="info-value">{gasPrice ? `${gasPrice} Gwei` : "Loading..."}</p>
-                </div>
-                <div className="info-card">
-                  <p className="info-label">Current Block</p>
-                  <p className="info-value">{blockNumber ?? "Loading..."}</p>
-                </div>
-              </div>
+              {/* Minimal info: balance kept; gas/block removed for Tier 1 compliance */}
 
               <div className="balance-section">
                 <div className="balance-label">ETH Balance</div>
