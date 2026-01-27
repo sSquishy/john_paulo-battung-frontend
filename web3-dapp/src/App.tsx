@@ -63,7 +63,7 @@ function App() {
             <p className="subtitle">Connect your Ethereum wallet</p>
           </div>
 
-          <div className="login-content">
+          <div className="login-content" style={{ minHeight: "400px" }}>
             {walletAddress ? (
               <div className="wallet-connected">
                 <div className="success-icon">✓</div>
