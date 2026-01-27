@@ -2,8 +2,12 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "server.ts",
+  "main": "index.js",
   "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon --watch ./ --ext ts,json --exec \"node --loader ts-node/esm server.ts\""
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -14,15 +18,11 @@
     "express": "^5.2.1"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.13",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.0.10",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon --watch \"./**/*.ts\" --exec npx ts-node server.ts"
   }
 }
