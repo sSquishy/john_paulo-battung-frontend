@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getBalance, getTransactions, getGasPrice, getBlockNumber } from "../utils/eth.js";
+import { getBalance, getGasPrice, getBlockNumber, getTransactions } from "../utils/eth.js";
 
 const router = Router();
 
@@ -9,11 +9,22 @@ router.get("/", async (req, res) => {
   if (!address || typeof address !== "string") {
     return res.status(400).json({ error: "Missing address query parameter" });
   }
+
   try {
-    const balance = await getBalance(address);
-    res.json({ balance });
+    // Fetch all three in parallel
+    const [balance, gasPrice, blockNumber] = await Promise.all([
+      getBalance(address),
+      getGasPrice(),
+      getBlockNumber()
+    ]);
+
+    res.json({
+      balance,      // ETH balance of the given address
+      gasPrice,     // current gas price (gwei)
+      blockNumber   // current Ethereum block number
+    });
   } catch (err) {
-    res.status(500).json({ error: "Failed to get balance" });
+    res.status(500).json({ error: "Failed to fetch account data" });
   }
 });
 
@@ -23,6 +34,7 @@ router.get("/transactions", async (req, res) => {
   if (!address || typeof address !== "string") {
     return res.status(400).json({ error: "Missing address query parameter" });
   }
+
   try {
     const transactions = await getTransactions(address);
     res.json(transactions);

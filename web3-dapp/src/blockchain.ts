@@ -1,9 +1,25 @@
-import { ethers } from 'ethers';
+// frontend/src/blockchain.ts
 
-// Load Alchemy key from Vite env (set VITE_ALCHEMY_KEY in .env)
-const ALCHEMY_KEY = import.meta.env.VITE_ALCHEMY_KEY as string | undefined;
+// Account data type returned from backend
+export type AccountData = {
+  balance: string;      // ETH balance
+  gasPrice: string;     // current gas price in gwei
+  blockNumber: number;  // current Ethereum block number
+};
 
-// Add proper window.ethereum type declaration
+export async function getAccountData(address: string): Promise<AccountData> {
+  try {
+    const res = await fetch(`http://localhost:4000/api/account?address=${address}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    return data;
+  } catch (error) {
+    console.error("Error fetching account data from backend:", error);
+    return { balance: "0", gasPrice: "0", blockNumber: 0 };
+  }
+}
+
+// Add proper window.ethereum type declaration for TypeScript
 declare global {
   interface Window {
     ethereum?: {
@@ -17,9 +33,7 @@ export async function connectWallet(): Promise<string> {
   if (!window.ethereum) throw new Error('MetaMask is not installed');
 
   try {
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const accounts = await provider.send('eth_requestAccounts', []);
-
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }) as string[];
     if (!accounts || accounts.length === 0) throw new Error('No accounts found');
     return accounts[0];
   } catch (error: unknown) {
@@ -31,71 +45,24 @@ export async function connectWallet(): Promise<string> {
   }
 }
 
-/** Get ETH balance (returns string in ETH, 4 decimal places) */
-export async function getBalance(address: string): Promise<string> {
-  if (!window.ethereum) throw new Error('No provider available');
-
-  try {
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const balance = await provider.getBalance(address);
-    const eth = ethers.formatEther(balance);
-    return parseFloat(eth).toFixed(4);
-  } catch (error) {
-    console.error('Error fetching balance:', error);
-    throw new Error('Failed to fetch balance');
-  }
-}
-
 /** Transaction type */
 export type SimpleTx = {
   hash: string;
   from: string;
   to: string | null;
-  value: string; // in ETH
+  value: string;      // in ETH
   blockNumber: string;
 };
 
-/** Fetch last 10 transactions from Alchemy Sepolia */
+/** Fetch last 10 transactions from backend */
 export async function getTransactions(address: string): Promise<SimpleTx[]> {
-  if (!ALCHEMY_KEY) {
-    console.error('VITE_ALCHEMY_KEY is not set. Skipping transaction fetch.');
-    return [];
-  }
-
-  const url = `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_KEY}`;
-  const data = {
-    id: 1,
-    jsonrpc: "2.0",
-    method: "alchemy_getAssetTransfers",
-    params: [
-      {
-        fromAddress: address,
-        category: ["external", "internal", "erc20", "erc721"],
-        maxCount: "0xA", // last 10 transactions
-      },
-    ],
-  };
-
   try {
-    const res = await fetch(url, {
-      method: "POST",
-      body: JSON.stringify(data),
-      headers: { "Content-Type": "application/json" },
-    });
-
-    const json = await res.json();
-
-    if (!json.result || !json.result.transfers) return [];
-
-    return json.result.transfers.map((tx: any): SimpleTx => ({
-      hash: tx.hash,
-      from: tx.from,
-      to: tx.to || null,
-      value: (tx.value ? Number(tx.value) / 1e18 : 0).toString(),
-      blockNumber: parseInt(tx.blockNum, 16).toString(),
-    }));
+    const res = await fetch(`http://localhost:4000/api/account/transactions?address=${address}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    return data;
   } catch (error) {
-    console.error("Error fetching transactions:", error);
+    console.error('Error fetching transactions from backend:', error);
     return [];
   }
 }

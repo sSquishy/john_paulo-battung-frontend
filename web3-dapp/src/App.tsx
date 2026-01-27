@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "./App.css";
-import { connectWallet as connectWalletHelper, getBalance, getTransactions } from "./blockchain";
+import { connectWallet as connectWalletHelper, getAccountData, getTransactions } from "./blockchain";
 import type { SimpleTx } from "./blockchain";
 
 function App() {
@@ -10,6 +10,8 @@ function App() {
   const [balance, setBalance] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<SimpleTx[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [gasPrice, setGasPrice] = useState<string | null>(null);
+  const [blockNumber, setBlockNumber] = useState<number | null>(null);
   
 
   const connectWallet = async () => {
@@ -20,8 +22,10 @@ function App() {
       const address = await connectWalletHelper();
       setWalletAddress(address);
 
-      const userBalance = await getBalance(address);
-      setBalance(userBalance);
+      const accountData = await getAccountData(address);
+      setBalance(accountData.balance);
+      setGasPrice(accountData.gasPrice);
+      setBlockNumber(accountData.blockNumber);
       await refreshTransactions(address);
     } catch (error: unknown) {
       if (error instanceof Error) setError(error.message);
@@ -36,6 +40,8 @@ function App() {
     setError(null);
     setBalance(null);
     setTransactions([]);
+    setGasPrice(null);
+    setBlockNumber(null);
   };
 
   const refreshTransactions = async (address?: string) => {
@@ -45,6 +51,14 @@ function App() {
     try {
       const txs = await getTransactions(addr);
       setTransactions(txs);
+        try {
+          const account = await getAccountData(addr);
+          setBalance(account.balance);
+          setGasPrice(account.gasPrice);
+          setBlockNumber(account.blockNumber);
+        } catch (e) {
+          // keep existing data on account fetch error
+        }
     } catch (error: unknown) {
       if (error instanceof Error) setError(error.message);
       else setError("Failed to fetch transactions");
@@ -118,9 +132,25 @@ function App() {
             <div className="dashboard-content">
               {/* Minimal info: balance kept; gas/block removed for Tier 1 compliance */}
 
-              <div className="balance-section">
-                <div className="balance-label">ETH Balance</div>
-                <div className="balance-value">{balance ? `${balance} ETH` : "Loading..."}</div>
+              <div className="info-rows">
+                <div className="info-row">
+                  <div className="info-card">
+                    <p className="info-label">CURRENT GAS PRICE</p>
+                    <p className="info-value inline">{gasPrice ? (<><span className="value-number">{gasPrice}</span><span className="value-unit">Gwei</span></>) : (isLoadingData ? 'Loading...' : '—')}</p>
+                  </div>
+
+                  <div className="info-card">
+                    <p className="info-label">CURRENT BLOCK</p>
+                    <p className="info-value">{blockNumber !== null ? `${blockNumber}` : (isLoadingData ? 'Loading...' : '—')}</p>
+                  </div>
+                </div>
+
+                <div className="info-row">
+                  <div className="balance-section">
+                    <div className="balance-label">ETH Balance</div>
+                    <div className="balance-value">{balance ? `${balance} ETH` : (isLoadingData ? 'Loading...' : '—')}</div>
+                  </div>
+                </div>
               </div>
 
               <div className="transactions-section">
