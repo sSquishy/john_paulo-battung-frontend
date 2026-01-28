@@ -7,6 +7,7 @@ export type AccountData = {
   blockNumber: number;  // current Ethereum block number
 };
 
+// Fetch account data from backend
 export async function getAccountData(address: string): Promise<AccountData> {
   try {
     const res = await fetch(`http://localhost:4000/api/account?address=${address}`);
